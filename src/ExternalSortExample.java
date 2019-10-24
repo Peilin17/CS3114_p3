@@ -13,7 +13,7 @@ import java.util.Random;
 * only handle data sets that have a size that is are divible by BUFFER_SIZE.
 * 
 */
-public class ExternalSortExampel {
+public class ExternalSortExample {
 
     public static int BUFFER_SIZE = 10;
 
@@ -152,7 +152,7 @@ public class ExternalSortExampel {
             fw.write(ger >> 24);
         }
         fw.close();
-        ExternalSort sort = new ExternalSort();
+        ExternalSortExample sort = new ExternalSortExample();
         System.out.println("Original:");
         dumpFile(sort, file);
         File f = sort.sort(file);
@@ -161,7 +161,7 @@ public class ExternalSortExampel {
 
     }
 
-    private static void dumpFile(ExternalSort sort, File f)
+    private static void dumpFile(ExternalSortExample sort, File f)
             throws FileNotFoundException, IOException {
         FileInputStream fis = new FileInputStream(f);
         int i = sort.readInt(fis);
