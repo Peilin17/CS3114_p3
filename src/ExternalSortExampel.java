@@ -13,7 +13,7 @@ import java.util.Random;
 * only handle data sets that have a size that is are divible by BUFFER_SIZE.
 * 
 */
-public class ExternalSort {
+public class ExternalSortExampel {
 
     public static int BUFFER_SIZE = 10;
 
