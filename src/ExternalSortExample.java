@@ -139,8 +139,8 @@ public class ExternalSortExample {
      * @param args
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException {
-        File file = new File("mainset");
+    public void exSort(String filename) throws IOException {
+        File file = new File(filename);
         Random random = new Random(System.currentTimeMillis());
         FileOutputStream fw = new FileOutputStream(file);
         for (int i = 0; i < BUFFER_SIZE * 3; i++) {
