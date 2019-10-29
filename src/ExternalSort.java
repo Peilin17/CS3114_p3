@@ -21,7 +21,7 @@ import java.util.Random;
  */
 public class ExternalSort {
     public static int HEAP_SIZE = 8192;
-    Ascore heap[];
+    private Ascore heap[];
 
     //private ArrayList<Ascore> inter;
     private DataInputStream in;
@@ -29,9 +29,11 @@ public class ExternalSort {
     private File f;
     private DataOutputStream out;
     private File result;
-
+    private int removeIndex = -1;
+    private int pivot[];
     public ExternalSort(String filename) throws FileNotFoundException {
         index = 0;
+        
         f = new File("runFile");
         result = new File("result");
         //inter = new ArrayList<Ascore>();
@@ -151,63 +153,125 @@ public class ExternalSort {
         
 
     }
-
+    /**
+     * 这个步骤太恶心了， 需要优化
+     * 具体看分步注释
+     * @throws IOException
+     */
     private void mutiMerge() throws IOException {
         ArrayList<ArrayList<Ascore>> runs = new ArrayList<ArrayList<Ascore>>();
-        if (HEAP_SIZE / index < 1024) {
+        pivot = new int[index];
+        if (HEAP_SIZE / index < 1024) { //这下面是run的数量超过8个，所以每一个run不能取完不然内存超8block
+            //取每一个run的前 （总8block容量/run的数量）
             int recordsPerRun = HEAP_SIZE / index;
             /*
-             * 这里相对于下面需要补充：
+                            * 这里相对于下面else需要补充：
              * 1. 每一次取recordPerRun的量 （多一个循环去分段读完每一个run（1024 record））
              * 2. 在findmax时一个arrayList读完了要记得补充下一个（感觉很麻烦）
              */
-            DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream("runfile")));
-            for (int i = 0; i < index; i++) {
-                int runLength = in.readInt();
+            DataInputStream writein = new DataInputStream(new BufferedInputStream(new FileInputStream("runfile")));
+            for (int i = 0; i < index; i++) { 
+                //这里第一次提取，for loop里判断recordsPerRun是否够每一个 run， 最后一个run可能很少。
+                int runLength = writein.readInt();
                 ArrayList<Ascore> run = new ArrayList<Ascore>();
-                for (int j = 0; j < recordsPerRun; j++) {
-                    Ascore t = new Ascore(in.readLong(), in.readDouble());
+                int j = 0;
+                for (; j < (recordsPerRun<runLength?recordsPerRun:runLength); j++) {
+                    Ascore t = new Ascore(writein.readLong(), writein.readDouble());
                     run.add(t);
+                    
                 }
-                runs.add(run);
+                pivot[i] = j;//pivot 看每一个run都读到了哪里，为了后面当现有的run merge完补齐
+                for (;j < runLength; j++)//这里读完当前run, 为了去读下一个
+                {
+                    writein.readLong();
+                    writein.readDouble();
+                }
+                
+                runs.add(run);//添加到runs总集
             }
-            in.close();
+            writein.close();
             // next is output part
+            /*
+             * 开启写入：
+             * 正式版要求写入原文件，这里先新建一个测试省的复制粘贴
+             */
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
-            while (!runs.isEmpty()) {
+            while (!runs.isEmpty()) {//循环查看每一个run的第一个，找最小值
                 for (int i = 0; i < index; i++) {
-                    
-                    fin.writeLong(findMax(runs).getPid());
-                    fin.writeDouble(findMax(runs).getScore());
+                    Ascore t = findMax(runs);//这是找最小值
+                    if (removeIndex != -1)//当一个run跑完时会触发removeIndex ！=-1
+                    {
+                        //新建一个run，通过pivot确定上次读到的位置，继续读规定的数量，如果不够就读完拉倒
+                        ArrayList<Ascore> run = new ArrayList<Ascore>();
+                        DataInputStream addnew = new DataInputStream(new BufferedInputStream(new FileInputStream("runfile")));
+                        for (int y = 0; y < removeIndex; y++) {//跳过之前的run
+                            int runLength = addnew.readInt();
+                            int j = 0;
+                            for (;j < runLength; j++)
+                            {
+                                addnew.readLong();
+                                addnew.readDouble();
+                            }          
+                        }
+                        //到达指定run
+                        int runLength = addnew.readInt();
+                        //pivot
+                        if (pivot[removeIndex] < runLength)
+                        {
+                            int m = 0;
+                            for (; m < pivot[removeIndex]; m++)//跳过之前读过的
+                            {
+                                addnew.readLong();
+                                addnew.readDouble();
+                            }
+                            for (; m < (pivot[removeIndex] + recordsPerRun < runLength?pivot[removeIndex]+recordsPerRun:runLength);m++)
+                            {//开始读要求的并添加到内存
+                                Ascore ta = new Ascore(addnew.readLong(), addnew.readDouble());
+                                run.add(ta);
+                            }
+                        }
+                        //该归-1的归-1， 该加的加
+                        runs.set(removeIndex, run);
+                        pivot[removeIndex] += recordsPerRun;
+                        removeIndex = -1;
+                        addnew.close();
+                        
+                        
+                    }
+                    fin.writeLong(t.getPid());
+                    fin.writeDouble(t.getScore());
                 }
                 fin.flush();
             }
+            fin.close();
         } else {
             // int recordsPerRun = 1024;
-            DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream("runfile")));
+            DataInputStream writein = new DataInputStream(new BufferedInputStream(new FileInputStream("runfile")));
             for (int i = 0; i < index; i++) {
-                int runLength = in.readInt();
+                int runLength = writein.readInt();
                 ArrayList<Ascore> run = new ArrayList<Ascore>();
                 for (int j = 0; j < runLength; j++) {
-                    Ascore t = new Ascore(in.readLong(), in.readDouble());
+                    Ascore t = new Ascore(writein.readLong(), writein.readDouble());
                     run.add(t);
                 }
                 runs.add(run);
             }
-            in.close();
+            writein.close();
             // next is output part
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
             while (!runs.isEmpty()) {
                 for (int i = 0; i < index; i++) {
-                    fin.writeLong(findMax(runs).getPid());
-                    fin.writeDouble(findMax(runs).getScore());
+                    Ascore t = findMax(runs);
+                    fin.writeLong(t.getPid());
+                    fin.writeDouble(t.getScore());
                 }
                 fin.flush();
             }
-            //fin.close();?
+            fin.close();
         }
+        
 
     }
 
@@ -217,7 +281,8 @@ public class ExternalSort {
         for (int i = 0; i < runs.size(); i++) {
             if (runs.get(i).isEmpty())
             {
-                runs.remove(i);
+                //runs.remove(i);
+                removeIndex = i;
                 continue;
             }
             if (runs.get(i).get(1).compareTo(max) == 1) {
@@ -228,7 +293,6 @@ public class ExternalSort {
         runs.get(x).remove(1);
         return max;
     }
-
     public void closeInBuffer() throws IOException {
         in.close();
     }
