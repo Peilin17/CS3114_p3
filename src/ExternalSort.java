@@ -23,7 +23,7 @@ public class ExternalSort {
     public static int HEAP_SIZE = 8192;
     Ascore heap[];
 
-    private ArrayList<Ascore> inter;
+    //private ArrayList<Ascore> inter;
     private DataInputStream in;
     private int index;
     private File f;
@@ -34,7 +34,7 @@ public class ExternalSort {
         index = 0;
         f = new File("runFile");
         result = new File("result");
-        inter = new ArrayList<Ascore>();
+        //inter = new ArrayList<Ascore>();
         in = new DataInputStream(new BufferedInputStream(new FileInputStream(filename)));
         heap = new Ascore[8192];
         FileOutputStream file = new FileOutputStream(f);
@@ -73,6 +73,13 @@ public class ExternalSort {
         Ascore outBuffer[] = new Ascore[1024];
         int size = HEAP_SIZE - 1;
         for (int i = 1; i < 1024; i++) {
+            if (size == 0)
+            {
+                for (int l = (HEAP_SIZE - 1) / 2; l >= 0; l--) {
+                    sift(i);
+                } // heap rebuild finish
+                size = HEAP_SIZE - 1;
+            }
             long pid = in.readLong();
             double score = in.readDouble();
             Ascore t = new Ascore(pid, score);
@@ -80,8 +87,7 @@ public class ExternalSort {
             outBuffer[i] = heap[0];
             if (t.compareTo(last) == 1) {
                 heap[0] = heap[size - 1];
-                // heap[size - 1] = t;
-                inter.add(t);
+                heap[size - 1] = t;
                 size--;
             } else {
                 heap[0] = t;
@@ -142,6 +148,7 @@ public class ExternalSort {
         }
         index++;
         out.flush();
+        
 
     }
 
@@ -154,6 +161,28 @@ public class ExternalSort {
              * 1. 每一次取recordPerRun的量 （多一个循环去分段读完每一个run（1024 record））
              * 2. 在findmax时一个arrayList读完了要记得补充下一个（感觉很麻烦）
              */
+            DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream("runfile")));
+            for (int i = 0; i < index; i++) {
+                int runLength = in.readInt();
+                ArrayList<Ascore> run = new ArrayList<Ascore>();
+                for (int j = 0; j < recordsPerRun; j++) {
+                    Ascore t = new Ascore(in.readLong(), in.readDouble());
+                    run.add(t);
+                }
+                runs.add(run);
+            }
+            in.close();
+            // next is output part
+            FileOutputStream fi = new FileOutputStream(result);
+            DataOutputStream fin = new DataOutputStream(fi);
+            while (!runs.isEmpty()) {
+                for (int i = 0; i < index; i++) {
+                    
+                    fin.writeLong(findMax(runs).getPid());
+                    fin.writeDouble(findMax(runs).getScore());
+                }
+                fin.flush();
+            }
         } else {
             // int recordsPerRun = 1024;
             DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream("runfile")));
@@ -191,9 +220,6 @@ public class ExternalSort {
                 runs.remove(i);
                 continue;
             }
-//            if (runs.get(i).get(1) == null) {
-//                continue;
-//            }
             if (runs.get(i).get(1).compareTo(max) == 1) {
                 max = runs.get(i).get(1);
                 x = i;
