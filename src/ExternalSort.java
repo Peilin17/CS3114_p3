@@ -172,13 +172,13 @@ public class ExternalSort {
         FileOutputStream fi = new FileOutputStream(result);
         DataOutputStream fin = new DataOutputStream(fi);
         
-        for(int i = 0; i < this.heap.length; i ++)
+        while(heap.length >= 0)
         {
-            Ascore t = heap[i];
+            Ascore t = extractMax();
             fin.writeLong(t.getPid());
             fin.writeDouble(t.getScore());
+            fin.flush();
         }
-        fin.flush();
         fin.close();
             
     }
@@ -319,6 +319,59 @@ public class ExternalSort {
         runs.get(x).remove(1);
         return max;
     }
+    
+    public Ascore extractMax() 
+    { 
+        Ascore popped = heap[1]; 
+        int length = heap.length - 1;
+        heap[1] = heap[length]; 
+        maxHeapify(1); 
+        return popped; 
+    } 
+    
+    private boolean isLeaf(int pos) 
+    { 
+        if (pos >= (heap.length / 2) && pos <= heap.length) { 
+            return true; 
+        } 
+        return false; 
+    } 
+    
+    private void maxHeapify(int pos) 
+    { 
+        if (isLeaf(pos)) 
+            return; 
+  
+        if (heap[pos].compareTo(heap[leftChild(pos)]) == -1 ||  
+            heap[pos].compareTo(heap[rightChild(pos)]) == -1) { 
+  
+            if (heap[leftChild(pos)].compareTo(heap[rightChild(pos)]) == 1) { 
+                swap(pos, leftChild(pos)); 
+                maxHeapify(leftChild(pos)); 
+            } 
+            else { 
+                swap(pos, rightChild(pos)); 
+                maxHeapify(rightChild(pos)); 
+            } 
+        } 
+    }
+    
+    private void swap(int fpos, int spos) 
+    { 
+        Ascore tmp; 
+        tmp = heap[fpos]; 
+        heap[fpos] = heap[spos]; 
+        heap[spos] = tmp; 
+    } 
+    
+    private int leftChild(int pos) 
+    { 
+        return (2 * pos); 
+    } 
+    private int rightChild(int pos) 
+    { 
+        return (2 * pos) + 1; 
+    } 
 
     public void closeInBuffer() throws IOException {
         in.close();
