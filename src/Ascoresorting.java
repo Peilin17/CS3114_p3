@@ -13,8 +13,9 @@ public class Ascoresorting {
     {
         StudentManager studentmanager = new StudentManager();
         studentmanager.storeStudent(args[1]);//store the student file same as p2
-        ExternalSort es = new ExternalSort(args[1]);
+        ExternalSort es = new ExternalSort(args[0]);
         es.sortData();
+        studentmanager.printStudent("runFile.data", es.getTotal());
         
     }
 

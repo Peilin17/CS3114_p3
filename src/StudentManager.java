@@ -68,6 +68,48 @@ public class StudentManager {
         System.out.println(filename + " successfully loaded");
 
     }
+    public void printStudent(String filename, int num)
+    {
+        try {
+            DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(filename)));
+            int i = 0;
+            int j = 0;
+            while (j < 100 && i < num)
+            {
+                Long pid = in.readLong();
+                Double score = in.readDouble();
+                Student t = searchByPid(pid);
+                if (t != null)
+                {
+                    j++;
+                    System.out.println(pid + ", " + t.getFirstName() + " " + t.getLastName() + " at rank " + i + " with Ascore " + score);
+                }
+                
+                i++;
+            }
+
+            
+            in.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    /**
+     * search base on pid
+     */
+    private Student searchByPid(Long pid)
+    {
+        BSTIterator<Student> it = new BSTIterator<Student>(studentList.getRoot());
+        while (it.hasNext())
+        {
+            Student t = it.next().getElement();
+            if (t.getPid().equals(pid))
+            {
+                return t;
+            }
+        }
+        return null;
+    }
     /**
      * @param f firstname
      * @param m middle name

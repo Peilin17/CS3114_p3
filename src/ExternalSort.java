@@ -31,12 +31,12 @@ public class ExternalSort {
     private File result;
     private int removeIndex = -1;
     private int pivot[];
-
+    private int num = 0;
     public ExternalSort(String filename) throws FileNotFoundException {
         index = 0;
 
-        f = new File("runFile");
-        result = new File("result");
+        f = new File("runFile.data");
+        result = new File("result.data");
         // inter = new ArrayList<Ascore>();
         in = new DataInputStream(new BufferedInputStream(new FileInputStream(filename)));
         heap = new Ascore[8192];
@@ -47,8 +47,9 @@ public class ExternalSort {
     public void sortData() throws IOException {
         read8block();
         outputBuffer(readOneBlock());
-        mutiMerge();
+        
         clearHeap();
+        mutiMerge();
         closeInBuffer();
         closeOutBuffer();
     }
@@ -158,6 +159,7 @@ public class ExternalSort {
         for (int i = 0; i < h.length; i++) {
             out.writeLong(heap[i].getPid());
             out.writeDouble(heap[i].getScore());
+            num++;
         }
         index++;
         out.flush();
@@ -169,7 +171,7 @@ public class ExternalSort {
      * @throws IOException 
      */
     private void clearHeap() throws IOException {
-        FileOutputStream fi = new FileOutputStream(result);
+        FileOutputStream fi = new FileOutputStream(f);
         DataOutputStream fin = new DataOutputStream(fi);
         
         while(heap.length >= 0)
@@ -254,7 +256,7 @@ public class ExternalSort {
                             }
                             for (; m < (pivot[removeIndex] + recordsPerRun < runLength
                                     ? pivot[removeIndex] + recordsPerRun
-                                    : runLength); m++) {// 开始读要求的并添加到内存
+                                    : runLength); m++) {// 开始读要求的part并添加到内存
                                 Ascore ta = new Ascore(addnew.readLong(), addnew.readDouble());
                                 run.add(ta);
                             }
@@ -301,7 +303,11 @@ public class ExternalSort {
         }
 
     }
-
+    /**
+     * run 提取max
+     * @param runs
+     * @return
+     */
     private Ascore findMax(ArrayList<ArrayList<Ascore>> runs) {
         Ascore max = new Ascore(Long.parseLong("909123456789"), -1);
         int x = -1;
@@ -319,7 +325,10 @@ public class ExternalSort {
         runs.get(x).remove(1);
         return max;
     }
-    
+    /**
+     * heap数组提取max
+     * @return
+     */
     public Ascore extractMax() 
     { 
         Ascore popped = heap[1]; 
@@ -331,7 +340,11 @@ public class ExternalSort {
         }
         return popped; 
     } 
-    
+    public int getTotal()
+    {
+        return num;
+    }
+    //以下是heap转run helpmethod。
     private boolean isLeaf(int pos) 
     { 
         if (pos >= (heap.length / 2) && pos <= heap.length) { 
