@@ -336,7 +336,7 @@ public class ExternalSort {
     { 
         if (pos >= (heap.length / 2) && pos <= heap.length) { 
             return true; 
-        } 
+        }
         return false; 
     } 
     
