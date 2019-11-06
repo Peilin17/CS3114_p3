@@ -324,8 +324,11 @@ public class ExternalSort {
     { 
         Ascore popped = heap[1]; 
         int length = heap.length - 1;
-        heap[1] = heap[length]; 
-        maxHeapify(1); 
+        if(length >= 0)
+        {
+            heap[1] = heap[length]; 
+            maxHeapify(1);
+        }
         return popped; 
     } 
     
