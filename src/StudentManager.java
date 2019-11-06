@@ -14,7 +14,7 @@ public class StudentManager {
     private BST<Student> studentList;
     private int size;
     public StudentManager() {
-
+        studentList = new BST<Student>();
     }
 
     public void storeStudent(String filename) {
@@ -77,12 +77,15 @@ public class StudentManager {
             while (j < 100 && i < num)
             {
                 Long pid = in.readLong();
+                String p = String.valueOf(pid);
+                p = p.substring(3, p.length());
+                pid = Long.parseLong(p);
                 Double score = in.readDouble();
                 Student t = searchByPid(pid);
                 if (t != null)
                 {
                     j++;
-                    System.out.println(pid + ", " + t.getFirstName() + " " + t.getLastName() + " at rank " + i + " with Ascore " + score);
+                    System.out.println("909" + pid + ", " + t.getFirstName() + " " + t.getLastName() + " at rank " + i + " with Ascore " + score);
                 }
                 
                 i++;
