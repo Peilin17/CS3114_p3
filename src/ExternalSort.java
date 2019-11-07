@@ -35,7 +35,6 @@ public class ExternalSort {
     private int size;
     private boolean finishReading;
     private int heapSize = 0;
-    private int heapSizeHelp = 0;
 
     public ExternalSort(String filename) throws FileNotFoundException {
         index = 0;
@@ -188,9 +187,9 @@ public class ExternalSort {
     private void clearHeap() throws IOException {
 //        FileOutputStream fi = new FileOutputStream(f);
 //        DataOutputStream fin = new DataOutputStream(fi);
-        heapSizeHelp = heapSize;
+        int heapSizeHelp = heapSize;
         int i = 0;
-        for (; i < heapSize; i++) {
+        for (; i < heapSizeHelp; i++) {
             Ascore t = extractMax();
             out.writeLong(t.getPid());
             out.writeDouble(t.getScore());
@@ -386,7 +385,7 @@ public class ExternalSort {
      */
     public Ascore extractMax() {
         Ascore popped = heap[1];
-        heap[1] = heap[--heapSizeHelp];
+        heap[1] = heap[--heapSize];
         maxHeapify(1);
         return popped;
     }
