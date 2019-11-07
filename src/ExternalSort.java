@@ -170,12 +170,11 @@ public class ExternalSort {
             for (int i = 0; i < h.size(); i++) {
                 out.writeLong(heap[i].getPid());
                 out.writeDouble(heap[i].getScore());
-                
+
             }
             out.flush();
             index++;
         }
-        
 
     }
 
@@ -202,7 +201,7 @@ public class ExternalSort {
 //            index++;
 //        }
 //        index++;
-        //fin.close();
+        // fin.close();
 
     }
 
@@ -228,9 +227,9 @@ public class ExternalSort {
                 ArrayList<Ascore> run = new ArrayList<Ascore>();
                 int j = 0;
                 for (; j < recordsPerRun; j++) {
-                    
+
                     Ascore t = new Ascore(writein.readLong(), writein.readDouble());
-                    
+
                     run.add(t);
 
                 }
@@ -240,7 +239,7 @@ public class ExternalSort {
                     writein.readLong();
                     writein.readDouble();
                 }
-                //System.out.println(i + ", " + j);
+                // System.out.println(i + ", " + j);
                 runs.add(run);// 添加到runs总集
             }
             writein.close();
@@ -251,52 +250,49 @@ public class ExternalSort {
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
             while (!runs.isEmpty()) {// 循环查看每一个run的第一个，找最小值
-                
-                    Ascore t = findMax(runs);// 这是找最小值
-                    if (removeIndex != -1)// 当一个run跑完时会触发removeIndex ！=-1
-                    {
-                        // 新建一个run，通过pivot确定上次读到的位置，继续读规定的数量，如果不够就读完拉倒
-                        ArrayList<Ascore> run = new ArrayList<Ascore>();
-                        DataInputStream addnew = new DataInputStream(
-                                new BufferedInputStream(new FileInputStream("runFile.data")));
-                        for (int y = 0; y < removeIndex; y++) {// 跳过之前的run
-                            
-                            
-                            for (int j = 0; j < 1024; j++) {
-                                addnew.readLong();
-                                addnew.readDouble();
-                            }
-                        }
-                        // 到达指定run
-                        // pivot
-                        if (pivot[removeIndex] < 1024) {
-                            int m = 0;
-                            for (; m < pivot[removeIndex]; m++)// 跳过之前读过的
-                            {
-                                addnew.readLong();
-                                addnew.readDouble();
-                            }
-                            for (; m < (pivot[removeIndex] + recordsPerRun < 1024 ? pivot[removeIndex] + recordsPerRun
-                                    : 1024); m++) {// 开始读要求的part并添加到内存
-                                Ascore ta = new Ascore(addnew.readLong(), addnew.readDouble());
-                                run.add(ta);
-                            }
-                        }
-                        else
-                        {
-                            runs.remove(removeIndex);
-                            //removeIndex = -1;
-                        }
-                        // 该归-1的归-1， 该加的加
-                        //runs.set(removeIndex, run);
-                        pivot[removeIndex] += recordsPerRun;
-                        removeIndex = -1;
-                        addnew.close();
 
+                Ascore t = findMax(runs);// 这是找最小值
+                if (removeIndex != -1)// 当一个run跑完时会触发removeIndex ！=-1
+                {
+                    // 新建一个run，通过pivot确定上次读到的位置，继续读规定的数量，如果不够就读完拉倒
+                    ArrayList<Ascore> run = new ArrayList<Ascore>();
+                    DataInputStream addnew = new DataInputStream(
+                            new BufferedInputStream(new FileInputStream("runFile.data")));
+                    for (int y = 0; y < removeIndex; y++) {// 跳过之前的run
+
+                        for (int j = 0; j < 1024; j++) {
+                            addnew.readLong();
+                            addnew.readDouble();
+                        }
                     }
-                    fin.writeLong(t.getPid());
-                    fin.writeDouble(t.getScore());
-                
+                    // 到达指定run
+                    // pivot
+                    if (pivot[removeIndex] < 1024) {
+                        int m = 0;
+                        for (; m < pivot[removeIndex]; m++)// 跳过之前读过的
+                        {
+                            addnew.readLong();
+                            addnew.readDouble();
+                        }
+                        for (; m < (pivot[removeIndex] + recordsPerRun < 1024 ? pivot[removeIndex] + recordsPerRun
+                                : 1024); m++) {// 开始读要求的part并添加到内存
+                            Ascore ta = new Ascore(addnew.readLong(), addnew.readDouble());
+                            run.add(ta);
+                        }
+                    } else {
+                        runs.remove(removeIndex);
+                        // removeIndex = -1;
+                    }
+                    // 该归-1的归-1， 该加的加
+                    // runs.set(removeIndex, run);
+                    pivot[removeIndex] += recordsPerRun;
+                    removeIndex = -1;
+                    addnew.close();
+
+                }
+                fin.writeLong(t.getPid());
+                fin.writeDouble(t.getScore());
+
                 fin.flush();
                 num++;
             }
