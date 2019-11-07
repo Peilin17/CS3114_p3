@@ -186,8 +186,9 @@ public class ExternalSort {
     private void clearHeap() throws IOException {
 //        FileOutputStream fi = new FileOutputStream(f);
 //        DataOutputStream fin = new DataOutputStream(fi);
+        int heapSizeHelp = heapSize;
         int i = 0;
-        for (; i < heapSize; i++) {
+        for (; i < heapSizeHelp; i++) {
             Ascore t = extractMax();
             out.writeLong(t.getPid());
             out.writeDouble(t.getScore());
@@ -212,6 +213,10 @@ public class ExternalSort {
      */
     private void mutiMerge() throws IOException {
         ArrayList<ArrayList<Ascore>> runs = new ArrayList<ArrayList<Ascore>>();
+        if(index == 0)
+        {
+            index++;
+        }
         pivot = new int[index];
         if (HEAP_SIZE / index < 1024) { // 这下面是run的数量超过8个，所以每一个run不能取完不然内存超8block
             // 取每一个run的前 （总8block容量/run的数量）
@@ -376,11 +381,8 @@ public class ExternalSort {
      */
     public Ascore extractMax() {
         Ascore popped = heap[1];
-        int length = heap.length - 1;
-        if (length >= 0) {
-            heap[1] = heap[length];
-            maxHeapify(1);
-        }
+        heap[1] = heap[--heapSize];
+        maxHeapify(1);
         return popped;
     }
 
