@@ -50,8 +50,9 @@ public class ExternalSort {
 
     public void sortData() throws IOException {
         read8block();
-
+        
         while (!finishReading) {
+            
             outputBuffer(readOneBlock());
         }
         clearHeap();
@@ -76,13 +77,13 @@ public class ExternalSort {
             }
             for (int i = (heapSize - 1) / 2; i >= 0; i--) {
                 // System.out.println(i);
-                sift(i);
+                sift(i, heapSize);
             } // heap build finish
 
         } catch (Exception e) {
             for (int i = (heapSize - 1) / 2; i >= 0; i--) {
                 // System.out.println(i);
-                sift(i);
+                sift(i, heapSize);
             }
             return;
         }
@@ -99,37 +100,59 @@ public class ExternalSort {
         ArrayList<Ascore> outBuffer = new ArrayList<Ascore>();
         try {
             // size = heapSize;
+            Ascore last = null;
             for (int i = 0; i < 1024; i++) {
                 if (size == 0) {
                     for (int l = (heapSize - 1) / 2; l >= 0; l--) {
-                        sift(i);
-                    } // heap rebuild finish
+                        sift(l, heapSize);
+                    }
                     size = heapSize;
+//                    while (heap[0].compareTo(last) == 1)
+//                    {
+////                        if (size == 0)
+////                        {
+////                            for (int k = outBuffer.size(); k < 1024; k++)
+////                            {
+////                                outBuffer.add(new Ascore(Long.parseLong("111111111111"), -1));
+////                            }
+////                            size = heapSize;
+////                            return outBuffer;
+////                        }
+//                        Ascore temp = heap[0];
+//                        heap[0] = heap[size - 1];
+//                        heap[size - 1] = temp;
+//                        
+//                        size--;
+//                        
+//                        sift(0, size);
+//                    }
+                    
                 }
                 long pid = in.readLong();
                 double score = in.readDouble();
                 Ascore t = new Ascore(pid, score);
-                Ascore last = heap[0];
                 outBuffer.add(heap[0]);
+                last = heap[0];
+                
                 if (t.compareTo(last) == 1) {
                     heap[0] = heap[size - 1];
                     heap[size - 1] = t;
                     size--;
                 } else {
-                    heap[0] = t;
+                    heap[0] = t;                    
                 }
-                sift(0);
+                sift(0, size);
             }
         } catch (Exception e) {
             finishReading = true;
+//            for (int k = outBuffer.size(); k < 1024; k++)
+//            {
+//                outBuffer.add(new Ascore(Long.parseLong("111111111111"), -1));
+//            }
+            //e.printStackTrace();
             return outBuffer;
         }
-//        for (Ascore t: outBuffer)
-//        {
-//            System.out.println(t.getScore());
-//            
-//        }
-//        System.out.println("===============================");
+        
         return outBuffer;
 
     }
@@ -139,16 +162,16 @@ public class ExternalSort {
      * 
      * @param i
      */
-    private void sift(int i) {
+    private void sift(int i, int size) {
         int l = 2 * i + 1;
         int r = 2 * i + 2;
         Ascore vl, vr, v;
-        if (l < heapSize) {
+        if (l < size) {
             vl = heap[l];
         } else {
             vl = null;
         }
-        if (r < heapSize) {
+        if (r < size) {
             vr = heap[r];
         } else {
             vr = null;
@@ -159,11 +182,11 @@ public class ExternalSort {
         if (vl.compareTo(vr) == 1) {
             heap[i] = vl;
             heap[l] = v;
-            sift(l);
+            sift(l, size);
         } else {
             heap[i] = vr;
             heap[r] = v;
-            sift(r);
+            sift(r, size);
         }
         return;
     }
@@ -179,9 +202,9 @@ public class ExternalSort {
         if (h.size() > 0) {
             // out.writeInt(h.size());
             for (int i = 0; i < h.size(); i++) {
-                out.writeLong(heap[i].getPid());
-                out.writeDouble(heap[i].getScore());
-
+                out.writeLong(h.get(i).getPid());
+                out.writeDouble(h.get(i).getScore());
+                
             }
             out.flush();
             index++;
@@ -199,7 +222,7 @@ public class ExternalSort {
         int heapSizeHelp = heapSize;
         int i = 0;
         for (int j = (heapSize - 1) / 2; j >= 0; j--) {
-            sift(j);
+            sift(j, heapSize);
         } // heap build finish
         for (; i < heapSizeHelp; i++) {
             Ascore t = extractMax();
@@ -230,6 +253,7 @@ public class ExternalSort {
              * 这里相对于下面else需要补充： 1. 每一次取recordPerRun的量 （多一个循环去分段读完每一个run（1024 record）） 2.
              * 在findmax时一个arrayList读完了要记得补充下一个（感觉很麻烦）
              */
+            
             DataInputStream writein = new DataInputStream(new BufferedInputStream(new FileInputStream("runFile.data")));
             for (int i = 0; i < index; i++) {
                 // 这里第一次提取，for loop里判断recordsPerRun是否够每一个 run， 最后一个run可能很少。
@@ -246,6 +270,7 @@ public class ExternalSort {
                 pivot[i] = j;// pivot 看每一个run都读到了哪里，为了后面当现有的run merge完补
                 for (; j < 1024; j++)// 这里读完当前run, 为了去读下一个
                 {
+                    //System.out.println(i +"+"+ j);
                     writein.readLong();
                     writein.readDouble();
                 }
@@ -259,9 +284,10 @@ public class ExternalSort {
              */
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
-            while (!runs.isEmpty()) {// 循环查看每一个run的第一个，找最da值
+            int runsCount = 0;
+            while (runsCount < index) {// 循环查看每一个run的第一个，找最da值
 
-                Ascore t = findMax(runs);// 这是找最小值
+                Ascore t = findMax(runs);// 这是找最da值
                 if (removeIndex != -1)// 当一个run跑完时会触发removeIndex ！=-1
                 {
                     // 新建一个run，通过pivot确定上次读到的位置，继续读规定的数量，如果不够就读完拉倒
@@ -292,8 +318,10 @@ public class ExternalSort {
                         runs.set(removeIndex, run);
                         pivot[removeIndex] += recordsPerRun;
                     } else {
-                        runs.remove(removeIndex);
-                        pivotRemove(removeIndex);
+                        //runs.remove(removeIndex);
+                        runs.set(removeIndex, null);
+                        //pivotRemove(removeIndex);
+                        runsCount++;
                     }
                     // 该归-1的归-1， 该加的加
 
@@ -302,12 +330,13 @@ public class ExternalSort {
 
                 }
                 if (t != null) {
-                    System.out.println(t.getPid() + " " + t.getScore());
+                    //System.out.println(t.getPid() + " " + t.getScore());
                     fin.writeLong(t.getPid());
                     fin.writeDouble(t.getScore());
 
                     fin.flush();
                     num++;
+                    //System.out.println(num);
                 }
             }
             fin.close();
@@ -370,13 +399,23 @@ public class ExternalSort {
         Ascore max = new Ascore(Long.parseLong("909123456789"), -1);
         int x = -1;
         for (int i = 0; i < runs.size(); i++) {
+            if (runs.get(i) == null)
+            {
+                continue;
+            }
             if (runs.get(i).isEmpty()) {
                 // runs.remove(i);
                 removeIndex = i;
                 return null;
+
             }
+
         }
         for (int i = 0; i < runs.size(); i++) {
+            if (runs.get(i) == null)
+            {
+                continue;
+            }
             if (runs.get(i).get(0).compareTo(max) == 1) {
                 max = runs.get(i).get(0);
                 x = i;
@@ -400,7 +439,7 @@ public class ExternalSort {
         heapSize--;
 
         for (int i = (heapSize - 1) / 2; i >= 0; i--) {
-            sift(i);
+            sift(i, heapSize);
         } // heap build finish
         return popped;
 //        int heapSizeHelp = heapSize;
@@ -467,4 +506,5 @@ public class ExternalSort {
         }
         pivot[pivot.length - 1] = 404;
     }
+    
 }
