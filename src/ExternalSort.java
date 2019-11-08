@@ -86,7 +86,7 @@ public class ExternalSort {
             }
             return;
         }
-         size = heapSize;
+        size = heapSize;
     }
 
     /**
@@ -98,7 +98,7 @@ public class ExternalSort {
     private ArrayList<Ascore> readOneBlock() throws IOException {
         ArrayList<Ascore> outBuffer = new ArrayList<Ascore>();
         try {
-            //size = heapSize;
+            // size = heapSize;
             for (int i = 0; i < 1024; i++) {
                 if (size == 0) {
                     for (int l = (heapSize - 1) / 2; l >= 0; l--) {
@@ -259,7 +259,7 @@ public class ExternalSort {
              */
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
-            while (!runs.isEmpty()) {// 循环查看每一个run的第一个，找最小值
+            while (!runs.isEmpty()) {// 循环查看每一个run的第一个，找最da值
 
                 Ascore t = findMax(runs);// 这是找最小值
                 if (removeIndex != -1)// 当一个run跑完时会触发removeIndex ！=-1
@@ -291,29 +291,23 @@ public class ExternalSort {
                         }
                         runs.set(removeIndex, run);
                         pivot[removeIndex] += recordsPerRun;
-                    }
-                    else
-                    {
+                    } else {
                         runs.remove(removeIndex);
                         pivotRemove(removeIndex);
                     }
                     // 该归-1的归-1， 该加的加
-                    
+
                     removeIndex = -1;
                     addnew.close();
 
                 }
                 if (t != null) {
-                    //System.out.print(".");
+                    System.out.println(t.getPid() + " " + t.getScore());
                     fin.writeLong(t.getPid());
                     fin.writeDouble(t.getScore());
 
                     fin.flush();
                     num++;
-                }
-                else
-                {
-                    runs.clear();
                 }
             }
             fin.close();
@@ -379,8 +373,10 @@ public class ExternalSort {
             if (runs.get(i).isEmpty()) {
                 // runs.remove(i);
                 removeIndex = i;
-                continue;
+                return null;
             }
+        }
+        for (int i = 0; i < runs.size(); i++) {
             if (runs.get(i).get(0).compareTo(max) == 1) {
                 max = runs.get(i).get(0);
                 x = i;
@@ -464,12 +460,11 @@ public class ExternalSort {
     public void closeOutBuffer() throws IOException {
         out.close();
     }
-    public void pivotRemove(int i)
-    {
-        for (; i < pivot.length - 1; i++)
-        {
+
+    public void pivotRemove(int i) {
+        for (; i < pivot.length - 1; i++) {
             pivot[i] = pivot[i + 1];
         }
-        //pivot[pivot.length - 1] = (Integer) null;
+        pivot[pivot.length - 1] = 404;
     }
 }
