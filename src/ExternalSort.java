@@ -107,25 +107,28 @@ public class ExternalSort {
                         sift(l, heapSize);
                     }
                     size = heapSize;
-//                    while (heap[0].compareTo(last) == 1)
-//                    {
-////                        if (size == 0)
-////                        {
-////                            for (int k = outBuffer.size(); k < 1024; k++)
-////                            {
-////                                outBuffer.add(new Ascore(Long.parseLong("111111111111"), -1));
-////                            }
-////                            size = heapSize;
-////                            return outBuffer;
-////                        }
-//                        Ascore temp = heap[0];
-//                        heap[0] = heap[size - 1];
-//                        heap[size - 1] = temp;
-//                        
-//                        size--;
-//                        
-//                        sift(0, size);
-//                    }
+                    while (heap[0].compareTo(last) == 1)
+                    {
+                        if (size == 0)
+                        {
+                            for (int k = outBuffer.size(); k < 1024; k++)
+                            {
+                                outBuffer.add(new Ascore(Long.parseLong("111111111111"), -0.5));
+                            }
+                            for (int l = (heapSize - 1) / 2; l >= 0; l--) {
+                                sift(l, heapSize);
+                            }
+                            size = heapSize;
+                            return outBuffer;
+                        }
+                        Ascore temp = heap[0];
+                        heap[0] = heap[size - 1];
+                        heap[size - 1] = temp;
+                        
+                        size--;
+                        
+                        sift(0, size);
+                    }
                     
                 }
                 long pid = in.readLong();
@@ -145,10 +148,10 @@ public class ExternalSort {
             }
         } catch (Exception e) {
             finishReading = true;
-//            for (int k = outBuffer.size(); k < 1024; k++)
-//            {
-//                outBuffer.add(new Ascore(Long.parseLong("111111111111"), -1));
-//            }
+            for (int k = outBuffer.size(); k < 1024; k++)
+            {
+                outBuffer.add(new Ascore(Long.parseLong("111111111111"), -0.5));
+            }
             //e.printStackTrace();
             return outBuffer;
         }
@@ -204,8 +207,10 @@ public class ExternalSort {
             for (int i = 0; i < h.size(); i++) {
                 out.writeLong(h.get(i).getPid());
                 out.writeDouble(h.get(i).getScore());
-                
+                //System.out.println(h.get(i).getPid() + " " + h.get(i).getScore());
             }
+//            System.out.println("==============================================");
+//            System.out.println("==============================================");
             out.flush();
             index++;
         }
@@ -263,7 +268,7 @@ public class ExternalSort {
                 for (; j < recordsPerRun; j++) {
 
                     Ascore t = new Ascore(writein.readLong(), writein.readDouble());
-
+                    //if (t.getScore() >= 0.0)
                     run.add(t);
 
                 }
@@ -285,8 +290,9 @@ public class ExternalSort {
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
             int runsCount = 0;
+            //System.out.println(index);
             while (runsCount < index) {// 循环查看每一个run的第一个，找最da值
-
+                
                 Ascore t = findMax(runs);// 这是找最da值
                 if (removeIndex != -1)// 当一个run跑完时会触发removeIndex ！=-1
                 {
@@ -313,6 +319,7 @@ public class ExternalSort {
                         for (; m < (pivot[removeIndex] + recordsPerRun < 1024 ? pivot[removeIndex] + recordsPerRun
                                 : 1024); m++) {// 开始读要求的part并添加到内存
                             Ascore ta = new Ascore(addnew.readLong(), addnew.readDouble());
+                            //if (ta.getScore() >= 0.0)
                             run.add(ta);
                         }
                         runs.set(removeIndex, run);
@@ -322,6 +329,8 @@ public class ExternalSort {
                         runs.set(removeIndex, null);
                         //pivotRemove(removeIndex);
                         runsCount++;
+                        //System.out.println(runsCount);
+                        
                     }
                     // 该归-1的归-1， 该加的加
 
@@ -336,7 +345,7 @@ public class ExternalSort {
 
                     fin.flush();
                     num++;
-                    //System.out.println(num);
+                    
                 }
             }
             fin.close();

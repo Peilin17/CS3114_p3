@@ -65,7 +65,7 @@ public class StudentManager {
             e.printStackTrace();
         }
 
-        System.out.println(filename + " successfully loaded");
+        //System.out.println(filename + " successfully loaded");
 
     }
     public void printStudent(String filename, int num)
