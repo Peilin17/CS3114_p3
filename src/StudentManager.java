@@ -72,9 +72,9 @@ public class StudentManager {
     {
         try {
             DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(filename)));
-            int i = 0;
+            int i = 1;
             int j = 0;
-            while (j < 100 && i < num)
+            while (j < 100 && i <= num)
             {
                 Long pid = in.readLong();
                 String p = String.valueOf(pid);
@@ -82,10 +82,18 @@ public class StudentManager {
                 pid = Long.parseLong(p);
                 Double score = in.readDouble();
                 Student t = searchByPid(pid);
+                
                 if (t != null)
                 {
                     j++;
-                    System.out.println("909" + pid + ", " + t.getFirstName() + " " + t.getLastName() + " at rank " + i + " with Ascore " + score);
+                    StringBuilder sb = new StringBuilder();
+                    for (int k = 0; k < 9 
+                            - String.valueOf(pid).length();
+                            k++) {
+                        sb.append("0");
+                    }
+                    String z = sb.toString();
+                    System.out.println("909" + z + pid + ", " + t.getFirstName() + " " + t.getLastName() + " at rank " + i + " with Ascore " + score);
                 }
                 
                 i++;

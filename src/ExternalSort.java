@@ -74,14 +74,19 @@ public class ExternalSort {
                 heap[i] = t;
                 heapSize++;
             }
-            for (int i = (HEAP_SIZE - 1) / 2; i >= 0; i--) {
+            for (int i = (heapSize - 1) / 2; i >= 0; i--) {
+                // System.out.println(i);
                 sift(i);
             } // heap build finish
 
         } catch (Exception e) {
+            for (int i = (heapSize - 1) / 2; i >= 0; i--) {
+                // System.out.println(i);
+                sift(i);
+            }
             return;
         }
-        size = HEAP_SIZE - 1;
+         size = heapSize;
     }
 
     /**
@@ -93,12 +98,13 @@ public class ExternalSort {
     private ArrayList<Ascore> readOneBlock() throws IOException {
         ArrayList<Ascore> outBuffer = new ArrayList<Ascore>();
         try {
+            //size = heapSize;
             for (int i = 0; i < 1024; i++) {
                 if (size == 0) {
-                    for (int l = (HEAP_SIZE - 1) / 2; l >= 0; l--) {
+                    for (int l = (heapSize - 1) / 2; l >= 0; l--) {
                         sift(i);
                     } // heap rebuild finish
-                    size = HEAP_SIZE - 1;
+                    size = heapSize;
                 }
                 long pid = in.readLong();
                 double score = in.readDouble();
@@ -118,7 +124,12 @@ public class ExternalSort {
             finishReading = true;
             return outBuffer;
         }
-
+//        for (Ascore t: outBuffer)
+//        {
+//            System.out.println(t.getScore());
+//            
+//        }
+//        System.out.println("===============================");
         return outBuffer;
 
     }
@@ -132,12 +143,12 @@ public class ExternalSort {
         int l = 2 * i + 1;
         int r = 2 * i + 2;
         Ascore vl, vr, v;
-        if (l < HEAP_SIZE) {
+        if (l < heapSize) {
             vl = heap[l];
         } else {
             vl = null;
         }
-        if (r < HEAP_SIZE) {
+        if (r < heapSize) {
             vr = heap[r];
         } else {
             vr = null;
@@ -184,26 +195,21 @@ public class ExternalSort {
      * @throws IOException
      */
     private void clearHeap() throws IOException {
-//        FileOutputStream fi = new FileOutputStream(f);
-//        DataOutputStream fin = new DataOutputStream(fi);
+
         int heapSizeHelp = heapSize;
         int i = 0;
+        for (int j = (heapSize - 1) / 2; j >= 0; j--) {
+            sift(j);
+        } // heap build finish
         for (; i < heapSizeHelp; i++) {
             Ascore t = extractMax();
             out.writeLong(t.getPid());
             out.writeDouble(t.getScore());
             out.flush();
-            if (i > 0 && i % 1024 == 0) {
+            if (i > 0 && (i + 1) % 1024 == 0) {
                 index++;
             }
         }
-//        if (i % 1024 != 0)
-//        {
-//            index++;
-//        }
-//        index++;
-        // fin.close();
-
     }
 
     /**
@@ -213,8 +219,7 @@ public class ExternalSort {
      */
     private void mutiMerge() throws IOException {
         ArrayList<ArrayList<Ascore>> runs = new ArrayList<ArrayList<Ascore>>();
-        if(index == 0)
-        {
+        if (index == 0) {
             index++;
         }
         pivot = new int[index];
@@ -238,7 +243,7 @@ public class ExternalSort {
                     run.add(t);
 
                 }
-                pivot[i] = j;// pivot 看每一个run都读到了哪里，为了后面当现有的run merge完补齐
+                pivot[i] = j;// pivot 看每一个run都读到了哪里，为了后面当现有的run merge完补
                 for (; j < 1024; j++)// 这里读完当前run, 为了去读下一个
                 {
                     writein.readLong();
@@ -284,22 +289,32 @@ public class ExternalSort {
                             Ascore ta = new Ascore(addnew.readLong(), addnew.readDouble());
                             run.add(ta);
                         }
-                    } else {
+                        runs.set(removeIndex, run);
+                        pivot[removeIndex] += recordsPerRun;
+                    }
+                    else
+                    {
                         runs.remove(removeIndex);
-                        // removeIndex = -1;
+                        pivotRemove(removeIndex);
                     }
                     // 该归-1的归-1， 该加的加
-                    // runs.set(removeIndex, run);
-                    pivot[removeIndex] += recordsPerRun;
+                    
                     removeIndex = -1;
                     addnew.close();
 
                 }
-                fin.writeLong(t.getPid());
-                fin.writeDouble(t.getScore());
+                if (t != null) {
+                    //System.out.print(".");
+                    fin.writeLong(t.getPid());
+                    fin.writeDouble(t.getScore());
 
-                fin.flush();
-                num++;
+                    fin.flush();
+                    num++;
+                }
+                else
+                {
+                    runs.clear();
+                }
             }
             fin.close();
         } else {
@@ -336,12 +351,15 @@ public class ExternalSort {
                 if (runs.size() == 0) {
                     break;
                 }
-                Ascore t = findMax(runs);
-                fin.writeLong(t.getPid());
-                fin.writeDouble(t.getScore());
 
-                fin.flush();
-                num++;
+                Ascore t = findMax(runs);
+                if (t != null) {
+                    fin.writeLong(t.getPid());
+                    fin.writeDouble(t.getScore());
+                    // System.out.println(t.getPid() + " " + t.getScore());
+                    fin.flush();
+                    num++;
+                }
             }
             fin.close();
         }
@@ -370,8 +388,9 @@ public class ExternalSort {
         }
         if (x != -1) {
             runs.get(x).remove(0);
+            return max;
         }
-        return max;
+        return null;
     }
 
     /**
@@ -380,10 +399,19 @@ public class ExternalSort {
      * @return
      */
     public Ascore extractMax() {
-        Ascore popped = heap[1];
-        heap[1] = heap[--heapSize];
-        maxHeapify(1);
+        Ascore popped = heap[0];
+        heap[0] = heap[heapSize - 1];
+        heapSize--;
+
+        for (int i = (heapSize - 1) / 2; i >= 0; i--) {
+            sift(i);
+        } // heap build finish
         return popped;
+//        int heapSizeHelp = heapSize;
+//        Ascore popped = heap[0];
+//        heap[0] = heap[--heapSizeHelp];
+//        maxHeapify(0);
+//        return popped;
     }
 
     public int getTotal() {
@@ -391,43 +419,43 @@ public class ExternalSort {
     }
 
     // 以下是heap转run helpmethod。
-    private boolean isLeaf(int pos) {
-        if (pos >= (heap.length / 2) && pos <= heap.length) {
-            return true;
-        }
-        return false;
-    }
-
-    private void maxHeapify(int pos) {
-        if (isLeaf(pos))
-            return;
-
-        if (heap[pos].compareTo(heap[leftChild(pos)]) == -1 || heap[pos].compareTo(heap[rightChild(pos)]) == -1) {
-
-            if (heap[leftChild(pos)].compareTo(heap[rightChild(pos)]) == 1) {
-                swap(pos, leftChild(pos));
-                maxHeapify(leftChild(pos));
-            } else {
-                swap(pos, rightChild(pos));
-                maxHeapify(rightChild(pos));
-            }
-        }
-    }
-
-    private void swap(int fpos, int spos) {
-        Ascore tmp;
-        tmp = heap[fpos];
-        heap[fpos] = heap[spos];
-        heap[spos] = tmp;
-    }
-
-    private int leftChild(int pos) {
-        return (2 * pos);
-    }
-
-    private int rightChild(int pos) {
-        return (2 * pos) + 1;
-    }
+//    private boolean isLeaf(int pos) {
+//        if (pos >= (heap.length / 2) && pos <= heap.length) {
+//            return true;
+//        }
+//        return false;
+//    }
+//
+//    private void maxHeapify(int pos) {
+//        if (isLeaf(pos))
+//            return;
+//
+//        if (heap[pos].compareTo(heap[leftChild(pos)]) == -1 || heap[pos].compareTo(heap[rightChild(pos)]) == -1) {
+//
+//            if (heap[leftChild(pos)].compareTo(heap[rightChild(pos)]) == 1) {
+//                swap(pos, leftChild(pos));
+//                maxHeapify(leftChild(pos));
+//            } else {
+//                swap(pos, rightChild(pos));
+//                maxHeapify(rightChild(pos));
+//            }
+//        }
+//    }
+//
+//    private void swap(int fpos, int spos) {
+//        Ascore tmp;
+//        tmp = heap[fpos];
+//        heap[fpos] = heap[spos];
+//        heap[spos] = tmp;
+//    }
+//
+//    private int leftChild(int pos) {
+//        return (2 * pos) + 1;
+//    }
+//
+//    private int rightChild(int pos) {
+//        return (2 * pos) + 2;
+//    }
 
     public void closeInBuffer() throws IOException {
         in.close();
@@ -435,5 +463,13 @@ public class ExternalSort {
 
     public void closeOutBuffer() throws IOException {
         out.close();
+    }
+    public void pivotRemove(int i)
+    {
+        for (; i < pivot.length - 1; i++)
+        {
+            pivot[i] = pivot[i + 1];
+        }
+        //pivot[pivot.length - 1] = (Integer) null;
     }
 }
