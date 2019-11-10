@@ -9,6 +9,7 @@
 public class Ascore implements Comparable<Ascore> {
     private long pid;
     private double score;
+    private int index;
 
     public Ascore(long pid, double score) {
         this.pid = pid;
@@ -34,6 +35,14 @@ public class Ascore implements Comparable<Ascore> {
 
     public double getScore() {
         return score;
+    }
+    public void setIndex(int i)
+    {
+        index = i;
+    }
+    public int getIndex()
+    {
+        return index;
     }
 
 }
