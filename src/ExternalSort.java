@@ -6,31 +6,20 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Random;
-
-/**
- * 
- */
 
 /**
  * @author Peilin
- *
+ * @version 11/10/2019
  */
 public class ExternalSort {
-    public static int HEAP_SIZE = 8192;
-    private Ascore heap[];
-
-    // private ArrayList<Ascore> inter;
+    private static int constHeapSize = 8192;
+    private Ascore[] heap;
     private DataInputStream in;
     private int index;
-    private File f;
     private DataOutputStream out;
     private File result;
     private int removeIndex = -1;
-    private int pivot[];
     private int num = 0;
     private int size;
     private boolean finishReading;
@@ -40,21 +29,32 @@ public class ExternalSort {
     private boolean deathHeap = false;
     private Ascore last;
 
+    
+    /**
+     * constructor
+     * @param filename filename
+     * @throws FileNotFoundException
+     */
     public ExternalSort(String filename) throws FileNotFoundException {
         index = 0;
         finishReading = false;
-        f = new File("runFile.data");
+        File f = new File("runFile.data");
         result = new File("result.data");
         // inter = new ArrayList<Ascore>();
-        in = new DataInputStream(new BufferedInputStream(new FileInputStream(filename)));
+        in = new DataInputStream(
+                new BufferedInputStream(
+                        new FileInputStream(filename)));
         heap = new Ascore[8192];
         FileOutputStream file = new FileOutputStream(f);
         out = new DataOutputStream(file);
     }
 
+    /**
+     * sort the data
+     * @throws IOException
+     */
     public void sortData() throws IOException {
         read8block();
-
         while (!finishReading) {
             if (deathHeap) {
                 last = null;
@@ -62,7 +62,6 @@ public class ExternalSort {
                 runlength.add(runsize);
                 runsize = 0;
             }
-
             outputBuffer(readOneBlock());
         }
         runlength.add(runsize);
@@ -75,11 +74,12 @@ public class ExternalSort {
     }
 
     /**
-     * 先读8个block然后建成堆，
+     * read 8 block
+     * @return 
      */
     public void read8block() {
         try {
-            for (int i = 0; i < 8192; i++) {// total record for 8 block
+            for (int i = 0; i < 8192; i++) {
                 long pid = in.readLong();
                 double score = in.readDouble();
                 // store in heap, raw.
@@ -92,7 +92,8 @@ public class ExternalSort {
                 sift(i, heapSize);
             } // heap build finish
 
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             for (int i = (heapSize - 1) / 2; i >= 0; i--) {
                 // System.out.println(i);
                 sift(i, heapSize);
@@ -103,10 +104,7 @@ public class ExternalSort {
     }
 
     /**
-     * 然后再一个block一个block读.
-     * 
-     * @return
-     * @throws IOException
+     * @return outBuffer
      */
     private ArrayList<Ascore> readOneBlock() {
         ArrayList<Ascore> outBuffer = new ArrayList<Ascore>();
@@ -148,12 +146,14 @@ public class ExternalSort {
                     heap[0] = heap[size - 1];
                     heap[size - 1] = t;
                     size--;
-                } else {
+                }
+                else {
                     heap[0] = t;
                 }
                 sift(0, size);
             }
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             finishReading = true;
             return outBuffer;
         }
@@ -163,42 +163,47 @@ public class ExternalSort {
     }
 
     /**
-     * 这个metod巨tm关键 heap的建立和后续排序都在这了
-     * 
      * @param i
+     * @param size
      */
-    private void sift(int i, int size) {
+    private void sift(int i, int sizeH) {
         int l = 2 * i + 1;
         int r = 2 * i + 2;
-        Ascore vl, vr, v;
-        if (l < size) {
+        Ascore vl;
+        Ascore vr;
+        Ascore v;
+        if (l < sizeH) {
             vl = heap[l];
-        } else {
+        }
+        else {
             vl = null;
         }
-        if (r < size) {
+        if (r < sizeH) {
             vr = heap[r];
-        } else {
+        }
+        else {
             vr = null;
         }
         v = heap[i];
-        if (v.compareTo(vl) == 1 && v.compareTo(vr) == 1)
+        if (v.compareTo(vl) == 1 && v.compareTo(vr) == 1) {
             return;
+        }       
         if (vl.compareTo(vr) == 1) {
             heap[i] = vl;
             heap[l] = v;
-            sift(l, size);
-        } else {
+            sift(l, sizeH);
+        }
+        else {
             heap[i] = vr;
             heap[r] = v;
-            sift(r, size);
+            sift(r, sizeH);
         }
         return;
     }
 
     /**
      * output the outBUffer
-     * 
+     * @param h 
      * @throws IOException
      */
     private void outputBuffer(ArrayList<Ascore> h) throws IOException {
@@ -245,7 +250,6 @@ public class ExternalSort {
     }
 
     /**
-     * 这个步骤太恶心了， 需要优化 具体看分步注释
      * 
      * @throws IOException
      */
@@ -254,26 +258,34 @@ public class ExternalSort {
         if (index == 0) {
             index++;
         }
-        pivot = new int[index];
-        if (HEAP_SIZE / index < 1024) { // 这下面是run的数量超过8个，所以每一个run不能取完不然内存超8block
+        int[] pivot = new int[index];
+        if (constHeapSize / index < 1024) { 
             // 取每一个run的前 （总8block容量/run的数量）
-            int recordsPerRun = HEAP_SIZE / runlength.size();
+            int recordsPerRun = constHeapSize / runlength.size();
 
             ArrayList<Ascore> ascoreArray = new ArrayList<Ascore>();
 
-            DataInputStream writein = new DataInputStream(new BufferedInputStream(new FileInputStream("runFile.data")));
+            DataInputStream writein = 
+                    new DataInputStream(
+                            new BufferedInputStream(
+                                    new FileInputStream("runFile.data")));
             for (int i = 0; i < runlength.size(); i++) {
                 // 这里第一次提取，for loop里判断recordsPerRun是否够每一个 run， 最后一个run可能很少。
                 // ArrayList<Ascore> run = new ArrayList<Ascore>();
                 int j = 0;
-                for (; j < (runlength.get(i) < recordsPerRun ? runlength.get(i) : recordsPerRun); j++) {
+                for (; 
+                        j < (runlength.get(i) < 
+                                recordsPerRun ? runlength.get(i) : 
+                                    recordsPerRun); j++) {
 
-                    Ascore t = new Ascore(writein.readLong(), writein.readDouble());
+                    Ascore t = 
+                            new Ascore(writein.readLong(), 
+                                    writein.readDouble());
                     t.setIndex(i);
                     ascoreArray.add(t);
 
                 }
-                pivot[i] = j;// pivot 看每一个run都读到了哪里，为了后面当现有的run merge完补
+                pivot[i] = j;
                 // System.out.println(runlength.get(i) +" "+ i);
                 for (; j < runlength.get(i); j++)// 这里读完当前run, 为了去读下一个
                 {
@@ -292,12 +304,15 @@ public class ExternalSort {
             DataOutputStream fin = new DataOutputStream(fi);
             // int runsCount = 0;
             // System.out.println(index);
-            int highscorePerRun[] = new int[runlength.size()];
-            while (ascoreArray.size() != 0) {// 循环查看每一个run的第一个，找最da值
+            int[] highscorePerRun = new int[runlength.size()];
+            while (ascoreArray.size() != 0) {
 
                 quicksort(ascoreArray, 0, ascoreArray.size() - 1);
                 // insertion(ascoreArray);
-                for (int i = 0; i < (ascoreArray.size() < recordsPerRun ? ascoreArray.size() : recordsPerRun); i++) {
+                for (int i = 0; 
+                        i < (ascoreArray.size() 
+                                < recordsPerRun ? ascoreArray.size() : 
+                                    recordsPerRun); i++) {
                     fin.writeLong(ascoreArray.get(0).getPid());
                     fin.writeDouble(ascoreArray.get(0).getScore());
                     // System.out.println(ascoreArray.get(0).getScore());
@@ -307,7 +322,8 @@ public class ExternalSort {
                 }
                 fin.flush();
                 DataInputStream addnew = new DataInputStream(
-                        new BufferedInputStream(new FileInputStream("runFile.data")));
+                        new BufferedInputStream(
+                                new FileInputStream("runFile.data")));
                 for (int i = 0; i < runlength.size(); i++) {
 
                     if (pivot[i] >= runlength.get(i)) {
@@ -322,10 +338,14 @@ public class ExternalSort {
                         addnew.readLong();
                         addnew.readDouble();
                     }
-                    for (int k = pivot[i]; k < (highscorePerRun[i] + pivot[i] < runlength.get(i)
+                    for (int k = pivot[i]; 
+                            k < (highscorePerRun[i] 
+                                    + pivot[i] < runlength.get(i)
                             ? highscorePerRun[i] + pivot[i]
                             : runlength.get(i)); k++) {
-                        Ascore temp = new Ascore(addnew.readLong(), addnew.readDouble());
+                        Ascore temp = 
+                                new Ascore(addnew.readLong(), 
+                                        addnew.readDouble());
                         ascoreArray.add(temp);
                     }
                     pivot[i] += highscorePerRun[i];
@@ -340,9 +360,13 @@ public class ExternalSort {
 
             }
             fin.close();
-        } else {
+        }
+        else {
             // int recordsPerRun = 1024;
-            DataInputStream writein = new DataInputStream(new BufferedInputStream(new FileInputStream("runFile.data")));
+            DataInputStream writein = 
+                    new DataInputStream(
+                            new BufferedInputStream(
+                                    new FileInputStream("runFile.data")));
             boolean finish = false;
             try {
 
@@ -350,7 +374,9 @@ public class ExternalSort {
                     // int runLength = writein.readInt();
                     ArrayList<Ascore> run = new ArrayList<Ascore>();
                     for (int j = 0; j < 1024; j++) {
-                        Ascore t = new Ascore(writein.readLong(), writein.readDouble());
+                        Ascore t = 
+                                new Ascore(writein.readLong(), 
+                                        writein.readDouble());
                         run.add(t);
                     }
                     if (finish) {
@@ -358,7 +384,8 @@ public class ExternalSort {
                     }
                     runs.add(run);
                 }
-            } catch (Exception e) {
+            } 
+            catch (Exception e) {
                 finish = true;
 
             }
@@ -429,7 +456,7 @@ public class ExternalSort {
     /**
      * heap数组提取max
      * 
-     * @return
+     * @return popped
      */
     public Ascore extractMax() {
         Ascore popped = heap[0];
@@ -442,65 +469,112 @@ public class ExternalSort {
         return popped;
 
     }
-
+    /**
+     * get total
+     * 
+     * @return num 
+     */
     public int getTotal() {
         return num;
     }
-
+    /**
+     * closeInBuffer
+     * @throws IOException
+     */
     public void closeInBuffer() throws IOException {
         in.close();
     }
-
+    /**
+     * closeOutBuffer
+     * @throws IOException
+     */
     public void closeOutBuffer() throws IOException {
         out.close();
     }
-
-    private void quicksort(ArrayList<Ascore> A, int i, int j) { // Quicksort
-        int pivotindex = findpivot(A, i, j); // Pick a pivot
-        swap(A, pivotindex, j); // Stick pivot at end
+    /**
+     * closeOutBuffer
+     * @param a 
+     * @param i
+     * @param j
+     * @return
+     */
+    private void quicksort(ArrayList<Ascore> a, int i, int j) {
+        int pivotindex = findpivot(a, i, j); // Pick a pivot
+        swap(a, pivotindex, j); // Stick pivot at end
         // k will be the first position in the right subarray
         if (j - 1 - i < 65) {
-            insertion(A, i, j);
+            insertion(a, i, j);
             return;
         }
 
-        int k = partition(A, i, j - 1, A.get(j));
+        int k = partition(a, i, j - 1, a.get(j));
 
-        swap(A, k, j); // Put pivot in place
-        if ((k - i) > 1)
+        swap(a, k, j); // Put pivot in place
+        if ((k - i) > 1) {
             // System.out.println("k-i " +k +", " +i);
-            quicksort(A, i, k - 1); // Sort left partition
-        if ((j - k) > 1)
+            quicksort(a, i, k - 1); // Sort left partition
+        }
+        if ((j - k) > 1) {
             // System.out.println("j-k "+j +", " +k);
-            quicksort(A, k + 1, j); // Sort right partition
+            quicksort(a, k + 1, j); // Sort right partition
+        }
     }
-
-    private int findpivot(ArrayList<Ascore> A, int i, int j) {
+    /**
+     * closeOutBuffer
+     * @param a 
+     * @param i
+     * @param j
+     * @return (i + j) / 2
+     */
+    private int findpivot(ArrayList<Ascore> a, int i, int j) {
         return (i + j) / 2;
     }
-
-    private int partition(ArrayList<Ascore> A, int left, int right, Ascore pivot) {
+    /**
+     * closeOutBuffer
+     * @param a 
+     * @param i
+     * @param j
+     * @return left
+     */
+    private int partition(ArrayList<Ascore> a, 
+            int left, int right, Ascore pivot) {
         while (left <= right) { // Move bounds inward until they meet
-            while (A.get(left).compareTo(pivot) > 0)
+            while (a.get(left).compareTo(pivot) > 0) {
                 left++;
-            while ((right >= left) && (A.get(right).compareTo(pivot) < 0))
+            }
+            while ((right >= left) && (a.get(right).compareTo(pivot) < 0)) {
                 right--;
-            if (right > left)
-                swap(A, left, right); // Swap out-of-place values
+            }
+            if (right > left) {
+                swap(a, left, right); // Swap out-of-place values
+                
+            }
         }
         return left; // Return first position in right partition
     }
-
-    private void swap(ArrayList<Ascore> A, int i, int j) {
-        Ascore t = A.get(i);
-        A.set(i, A.get(j));
-        A.set(j, t);
+    /**
+     * closeOutBuffer
+     * @param a 
+     * @param i
+     * @param j
+     */
+    private void swap(ArrayList<Ascore> a, int i, int j) {
+        Ascore t = a.get(i);
+        a.set(i, a.get(j));
+        a.set(j, t);
     }
-
-    private void insertion(ArrayList<Ascore> A, int s, int e) {
+    /**
+     * closeOutBuffer
+     * @param a 
+     * @param s
+     * @param e
+     */
+    private void insertion(ArrayList<Ascore> a, int s, int e) {
         for (int i = s; i < e; i++) {
-            for (int k = i + 1; (k > 0) && A.get(k).compareTo(A.get(k - 1)) > 0; k--) {//
-                swap(A, k, k - 1);
+            for (int k = i + 1; 
+                    (k > 0) && a.get(k).compareTo(a.get(k - 1)) > 0; 
+                    k--) {
+                swap(a, k, k - 1);
             }
         }
     }

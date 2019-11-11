@@ -8,18 +8,29 @@ import java.io.FileInputStream;
 
 /**
  * @author Peilin
- *
+ * @version 11/10/2019
  */
 public class StudentManager {
     private BST<Student> studentList;
-    private int size;
+
+    /**
+     * constructor
+     */
     public StudentManager() {
         studentList = new BST<Student>();
     }
 
+    /**
+     * store student
+     * 
+     * @param filename filename
+     */
     public void storeStudent(String filename) {
         try {
-            DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(filename)));
+            DataInputStream in = 
+                    new DataInputStream(
+                            new BufferedInputStream(
+                                    new FileInputStream(filename)));
             byte[] txt = new byte[10];
             in.read(txt);
             int size = in.readInt();
@@ -57,74 +68,86 @@ public class StudentManager {
                 byte[] txttail = new byte[8];
                 in.read(txttail);
 
-                studentList.insert(createStudent(firstname, midname, lastname, pid));
+                studentList.insert(
+                        createStudent(firstname, midname, lastname, pid));
 
             }
             in.close();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             e.printStackTrace();
         }
-
-        //System.out.println(filename + " successfully loaded");
-
     }
-    public void printStudent(String filename, int num)
-    {
+
+    /**
+     * print student
+     * @param filename filename
+     * @param num number
+     */
+    public void printStudent(String filename, int num) {
         try {
-            DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(filename)));
+            DataInputStream in = 
+                    new DataInputStream(
+                            new BufferedInputStream(
+                                    new FileInputStream(filename)));
             int i = 1;
             int j = 0;
-            while (j < 100 && i <= num)
-            {
+            while (j < 100 && i <= num) {
                 Long pid = in.readLong();
                 String p = String.valueOf(pid);
                 p = p.substring(3, p.length());
                 pid = Long.parseLong(p);
                 Double score = in.readDouble();
                 Student t = searchByPid(pid);
-                
-                if (t != null)
-                {
+
+                if (t != null) {
                     j++;
                     StringBuilder sb = new StringBuilder();
-                    for (int k = 0; k < 9 
-                            - String.valueOf(pid).length();
+                    for (int k = 0; 
+                            k < 9 - String.valueOf(pid).length(); 
                             k++) {
                         sb.append("0");
                     }
                     String z = sb.toString();
-                    System.out.println("909" + z + pid + ", " + t.getFirstName() + " " + t.getLastName() + " at rank " + i + " with Ascore " + score);
+                    System.out.println("909" 
+                            + z + pid + ", " 
+                            + t.getFirstName() + " " 
+                            + t.getLastName() + " at rank "
+                            + i + " with Ascore " + score);
                 }
-                
+
                 i++;
             }
 
-            
             in.close();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     /**
      * search base on pid
+     * @param pid pidnumber
+     * @return t t
+     *          null
      */
-    private Student searchByPid(Long pid)
-    {
-        BSTIterator<Student> it = new BSTIterator<Student>(studentList.getRoot());
-        while (it.hasNext())
-        {
+    private Student searchByPid(Long pid) {
+        BSTIterator<Student> it = 
+                new BSTIterator<Student>(studentList.getRoot());
+        while (it.hasNext()) {
             Student t = it.next().getElement();
-            if (t.getPid().equals(pid))
-            {
+            if (t.getPid().equals(pid)) {
                 return t;
             }
         }
         return null;
     }
+
     /**
-     * @param f firstname
-     * @param m middle name
-     * @param l last name
+     * @param f   firstname
+     * @param m   middle name
+     * @param l   last name
      * @param pid pidnumber
      * 
      * @return if student created
