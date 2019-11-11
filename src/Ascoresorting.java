@@ -18,7 +18,7 @@ public class Ascoresorting {
         es.sortData();
         studentmanager.printStudent("result.data", es.getTotal());
         long end=System.currentTimeMillis();
-        System.out.println("程序运行时间： "+(end-start)+"ms");
+        //System.out.println("程序运行时间： "+(end-start)+"ms");
     }
 
     

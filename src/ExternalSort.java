@@ -257,7 +257,7 @@ public class ExternalSort {
         pivot = new int[index];
         if (HEAP_SIZE / index < 1024) { // 这下面是run的数量超过8个，所以每一个run不能取完不然内存超8block
             // 取每一个run的前 （总8block容量/run的数量）
-            int recordsPerRun = 1024;// HEAP_SIZE / runlength.size();
+            int recordsPerRun = HEAP_SIZE / runlength.size();
 
             ArrayList<Ascore> ascoreArray = new ArrayList<Ascore>();
 
