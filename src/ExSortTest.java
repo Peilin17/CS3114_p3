@@ -38,8 +38,11 @@ public class ExSortTest extends TestCase {
         tree.search(c);
         tree.search(b);
         tree.insert(a);
+        tree.remove(b);
         tree.clear();
         tree.isEmpty();
+        tree.findMax();
+        tree.findMin();
         tree.insert(a);
         assertNotNull(tree);
         
@@ -65,7 +68,7 @@ public class ExSortTest extends TestCase {
     public void test4() throws IOException
     {
         StudentManager ex = new StudentManager();
-        ex.storeStudent("sample1k2.bin");
+//        ex.storeStudent("sample1k2.bin");
         ex.printStudent("sample1k2.bin", 10);
         long pid = 906136272;
         ex.createStudent("R", "S", "Z", pid);

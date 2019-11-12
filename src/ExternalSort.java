@@ -171,39 +171,40 @@ public class ExternalSort {
 
     /**
      * @param i
-     * @param size
+     * @param sizeH
+     * @param heapS
      */
-    private void sift(int i, int sizeH, Ascore[] heap) {
+    private void sift(int i, int sizeH, Ascore[] heapS) {
         int l = 2 * i + 1;
         int r = 2 * i + 2;
         Ascore vl;
         Ascore vr;
         Ascore v;
         if (l < sizeH) {
-            vl = heap[l];
+            vl = heapS[l];
         }
         else {
             vl = null;
         }
         if (r < sizeH) {
-            vr = heap[r];
+            vr = heapS[r];
         }
         else {
             vr = null;
         }
-        v = heap[i];
+        v = heapS[i];
         if (v.compareTo(vl) == 1 && v.compareTo(vr) == 1) {
             return;
         }       
         if (vl.compareTo(vr) == 1) {
-            heap[i] = vl;
-            heap[l] = v;
-            sift(l, sizeH, heap);
+            heapS[i] = vl;
+            heapS[l] = v;
+            sift(l, sizeH, heapS);
         }
         else {
-            heap[i] = vr;
-            heap[r] = v;
-            sift(r, sizeH, heap);
+            heapS[i] = vr;
+            heapS[r] = v;
+            sift(r, sizeH, heapS);
         }
         return;
     }
@@ -484,15 +485,18 @@ public class ExternalSort {
     /**
      * heap数组提取max
      * 
+     * @param heapA heapA
+     * @param sizeA sizeA
+     * 
      * @return popped
      */
-    public Ascore extractMax(Ascore[] heap, int size) {
-        Ascore popped = heap[0];
-        heap[0] = heap[size - 1];
-        size--;
+    public Ascore extractMax(Ascore[] heapA, int sizeA) {
+        Ascore popped = heapA[0];
+        heapA[0] = heapA[sizeA - 1];
+        sizeA--;
 
-        for (int i = (size - 1) / 2; i >= 0; i--) {
-            sift(i, size, heap);
+        for (int i = (sizeA - 1) / 2; i >= 0; i--) {
+            sift(i, sizeA, heapA);
         } // heap build finish
         return popped;
 
