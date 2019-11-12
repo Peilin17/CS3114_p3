@@ -28,8 +28,9 @@ public class ExternalSort {
     private ArrayList<Integer> runlength = new ArrayList<Integer>();
     private boolean deathHeap = false;
     private Ascore last;
-
-    
+    private int aa;
+    //private int test;
+    //rivate String name;
     /**
      * constructor
      * @param filename filename
@@ -37,13 +38,15 @@ public class ExternalSort {
      */
     public ExternalSort(String filename) throws FileNotFoundException {
         index = 0;
+        //name = filename;
         finishReading = false;
         File f = new File("runFile.data");
         result = new File("result.data");
         // inter = new ArrayList<Ascore>();
+        File sample = new File(filename);
         in = new DataInputStream(
                 new BufferedInputStream(
-                        new FileInputStream(filename)));
+                        new FileInputStream(sample)));
         heap = new Ascore[8192];
         FileOutputStream file = new FileOutputStream(f);
         out = new DataOutputStream(file);
@@ -69,6 +72,7 @@ public class ExternalSort {
         clearHeap();
         closeInBuffer();
         closeOutBuffer();
+        //sample.delete();
         mutiMerge();
 
     }
@@ -89,14 +93,14 @@ public class ExternalSort {
             }
             for (int i = (heapSize - 1) / 2; i >= 0; i--) {
                 // System.out.println(i);
-                sift(i, heapSize);
+                sift(i, heapSize, heap);
             } // heap build finish
 
         } 
         catch (Exception e) {
             for (int i = (heapSize - 1) / 2; i >= 0; i--) {
                 // System.out.println(i);
-                sift(i, heapSize);
+                sift(i, heapSize, heap);
             }
             return;
         }
@@ -112,27 +116,12 @@ public class ExternalSort {
 
             for (int i = 0; i < 1024; i++) {
                 if (size == 0) {
-                    for (int l = (heapSize - 1) / 2; l >= 0; l--) {
-                        sift(l, heapSize);
-                    }
+                    deathHeap = true;
                     size = heapSize;
-                    while (heap[0].compareTo(last) == 1) {
-                        if (size == 0) {
-                            deathHeap = true;
-                            size = heapSize;
-                            for (int l = (heapSize - 1) / 2; l >= 0; l--) {
-                                sift(l, heapSize);
-                            }
-                            return outBuffer;
-                        }
-                        Ascore temp = heap[0];
-                        heap[0] = heap[size - 1];
-                        heap[size - 1] = temp;
-
-                        size--;
-
-                        sift(0, size);
+                    for (int l = (heapSize - 1) / 2; l >= 0; l--) {
+                        sift(l, heapSize, heap);
                     }
+                    return outBuffer;
 
                 }
                 long pid = in.readLong();
@@ -150,7 +139,7 @@ public class ExternalSort {
                 else {
                     heap[0] = t;
                 }
-                sift(0, size);
+                sift(0, size, heap);
             }
         } 
         catch (Exception e) {
@@ -166,7 +155,7 @@ public class ExternalSort {
      * @param i
      * @param size
      */
-    private void sift(int i, int sizeH) {
+    private void sift(int i, int sizeH, Ascore[] heap) {
         int l = 2 * i + 1;
         int r = 2 * i + 2;
         Ascore vl;
@@ -191,12 +180,12 @@ public class ExternalSort {
         if (vl.compareTo(vr) == 1) {
             heap[i] = vl;
             heap[l] = v;
-            sift(l, sizeH);
+            sift(l, sizeH, heap);
         }
         else {
             heap[i] = vr;
             heap[r] = v;
-            sift(r, sizeH);
+            sift(r, sizeH, heap);
         }
         return;
     }
@@ -214,9 +203,9 @@ public class ExternalSort {
             for (int i = 0; i < h.size(); i++) {
                 out.writeLong(h.get(i).getPid());
                 out.writeDouble(h.get(i).getScore());
-
+                
             }
-
+            //System.out.println(test++ + ", "+h.size());
             out.flush();
             index++;
         }
@@ -232,11 +221,9 @@ public class ExternalSort {
 
         int heapSizeHelp = heapSize;
         int i = 0;
-        for (int j = (heapSize - 1) / 2; j >= 0; j--) {
-            sift(j, heapSize);
-        } // heap build finish
         for (; i < heapSizeHelp; i++) {
-            Ascore t = extractMax();
+            Ascore t = extractMax(heap, heapSize);
+            heapSize--;
             out.writeLong(t.getPid());
             out.writeDouble(t.getScore());
 
@@ -263,8 +250,9 @@ public class ExternalSort {
             // 取每一个run的前 （总8block容量/run的数量）
             int recordsPerRun = constHeapSize / runlength.size();
 
-            ArrayList<Ascore> ascoreArray = new ArrayList<Ascore>();
-
+            //ArrayList<Ascore> ascoreArray = new ArrayList<Ascore>();
+            Ascore[] ascoreArray = new Ascore[8192];
+            aa = 0;
             DataInputStream writein = 
                     new DataInputStream(
                             new BufferedInputStream(
@@ -282,7 +270,9 @@ public class ExternalSort {
                             new Ascore(writein.readLong(), 
                                     writein.readDouble());
                     t.setIndex(i);
-                    ascoreArray.add(t);
+                    //ascoreArray.add(t);
+                    ascoreArray[aa] = t;
+                    aa++;
 
                 }
                 pivot[i] = j;
@@ -297,33 +287,42 @@ public class ExternalSort {
             }
             writein.close();
             // next is output part
-            /*
-             * 开启写入： 正式版要求写入原文件，这里先新建一个测试省的复制粘贴
-             */
+            //File result = new File(name);
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
             // int runsCount = 0;
             // System.out.println(index);
-            int[] highscorePerRun = new int[runlength.size()];
-            while (ascoreArray.size() != 0) {
-
-                quicksort(ascoreArray, 0, ascoreArray.size() - 1);
-                // insertion(ascoreArray);
+            
+            while (aa != 0/*ascoreArray.size() != 0*/) {
+                //System.out.println(aa);
+                int[] highscorePerRun = new int[runlength.size()];
+                //quicksort(ascoreArray, 0, ascoreArray.size() - 1);
+                for (int j = (aa - 1) / 2; j >= 0; j--) {
+                    sift(j, aa, ascoreArray);
+                } // heap build finish
                 for (int i = 0; 
-                        i < (ascoreArray.size() 
-                                < recordsPerRun ? ascoreArray.size() : 
+                        i < (aa 
+                                < recordsPerRun ? aa : 
                                     recordsPerRun); i++) {
-                    fin.writeLong(ascoreArray.get(0).getPid());
-                    fin.writeDouble(ascoreArray.get(0).getScore());
+                    Ascore t = ascoreArray[0];
+                    ascoreArray[0] = ascoreArray[aa - 1];
+                    
+                    //extractMax(ascoreArray, aa);
+                    aa--;
+                    sift(0, aa, ascoreArray);
+                    fin.writeLong(t.getPid());
+                    fin.writeDouble(t.getScore());
                     // System.out.println(ascoreArray.get(0).getScore());
-                    int group = ascoreArray.get(0).getIndex();
+                    int group = t.getIndex();
                     highscorePerRun[group]++;
-                    ascoreArray.remove(0);
+                    //ascoreArray.remove(0);
                 }
                 fin.flush();
+                
                 DataInputStream addnew = new DataInputStream(
                         new BufferedInputStream(
                                 new FileInputStream("runFile.data")));
+                //int f = 0;
                 for (int i = 0; i < runlength.size(); i++) {
 
                     if (pivot[i] >= runlength.get(i)) {
@@ -346,8 +345,13 @@ public class ExternalSort {
                         Ascore temp = 
                                 new Ascore(addnew.readLong(), 
                                         addnew.readDouble());
-                        ascoreArray.add(temp);
+                        //ascoreArray.add(temp);
+                        temp.setIndex(i);
+                        ascoreArray[aa] = temp;
+                        aa++;
+                        //f++;
                     }
+                    //System.out.println(aa);
                     pivot[i] += highscorePerRun[i];
                     for (int k = pivot[i]; k < runlength.get(i); k++) {
                         addnew.readLong();
@@ -357,7 +361,7 @@ public class ExternalSort {
                 }
                 addnew.close();
                 num += recordsPerRun;
-
+                
             }
             fin.close();
         }
@@ -391,6 +395,7 @@ public class ExternalSort {
             }
             writein.close();
             // next is output part
+            //File result = new File(name);
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
             while (!runs.isEmpty()) {
@@ -458,13 +463,13 @@ public class ExternalSort {
      * 
      * @return popped
      */
-    public Ascore extractMax() {
+    public Ascore extractMax(Ascore[] heap, int size) {
         Ascore popped = heap[0];
-        heap[0] = heap[heapSize - 1];
-        heapSize--;
+        heap[0] = heap[size - 1];
+        size--;
 
-        for (int i = (heapSize - 1) / 2; i >= 0; i--) {
-            sift(i, heapSize);
+        for (int i = (size - 1) / 2; i >= 0; i--) {
+            sift(i, size, heap);
         } // heap build finish
         return popped;
 
