@@ -30,7 +30,7 @@ public class ExternalSort {
     private Ascore last;
     private int aa;
     //private int test;
-    //rivate String name;
+    private String name;
     /**
      * constructor
      * @param filename filename
@@ -38,10 +38,10 @@ public class ExternalSort {
      */
     public ExternalSort(String filename) throws FileNotFoundException {
         index = 0;
-        //name = filename;
+        name = filename;
         finishReading = false;
         File f = new File("runFile.data");
-        result = new File("result.data");
+        //result = new File("result.data");
         // inter = new ArrayList<Ascore>();
         File sample = new File(filename);
         in = new DataInputStream(
@@ -72,6 +72,8 @@ public class ExternalSort {
         clearHeap();
         closeInBuffer();
         closeOutBuffer();
+        File s = new File(name);
+        s.delete();
         //sample.delete();
         mutiMerge();
 
@@ -116,12 +118,28 @@ public class ExternalSort {
 
             for (int i = 0; i < 1024; i++) {
                 if (size == 0) {
-                    deathHeap = true;
-                    size = heapSize;
                     for (int l = (heapSize - 1) / 2; l >= 0; l--) {
                         sift(l, heapSize, heap);
                     }
-                    return outBuffer;
+                    size = heapSize;
+                    while (heap[0].compareTo(last) == 1) {
+                        if (size == 0)
+                        {
+                            deathHeap = true;
+                            size = heapSize;
+                            for (int l = (heapSize - 1) / 2; l >= 0; l--) {
+                                sift(l, heapSize, heap);
+                            }
+                            return outBuffer;
+                        }
+                        Ascore temp = heap[0];
+                        heap[0] = heap[size - 1];
+                        heap[size - 1] = temp;
+                        size--;
+                        sift(0, size, heap);
+                    }
+                    
+                    
 
                 }
                 long pid = in.readLong();
@@ -221,6 +239,10 @@ public class ExternalSort {
 
         int heapSizeHelp = heapSize;
         int i = 0;
+        for (int j = (heapSize - 1) / 2; j >= 0; j--)
+        {
+            sift(j, heapSize, heap);
+        }
         for (; i < heapSizeHelp; i++) {
             Ascore t = extractMax(heap, heapSize);
             heapSize--;
@@ -288,6 +310,7 @@ public class ExternalSort {
             writein.close();
             // next is output part
             //File result = new File(name);
+            result = new File(name);
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
             // int runsCount = 0;
@@ -395,7 +418,7 @@ public class ExternalSort {
             }
             writein.close();
             // next is output part
-            //File result = new File(name);
+            result = new File(name);
             FileOutputStream fi = new FileOutputStream(result);
             DataOutputStream fin = new DataOutputStream(fi);
             while (!runs.isEmpty()) {
@@ -496,91 +519,5 @@ public class ExternalSort {
     public void closeOutBuffer() throws IOException {
         out.close();
     }
-    /**
-     * closeOutBuffer
-     * @param a 
-     * @param i
-     * @param j
-     * @return
-     */
-    private void quicksort(ArrayList<Ascore> a, int i, int j) {
-        int pivotindex = findpivot(a, i, j); // Pick a pivot
-        swap(a, pivotindex, j); // Stick pivot at end
-        // k will be the first position in the right subarray
-        if (j - 1 - i < 65) {
-            insertion(a, i, j);
-            return;
-        }
-
-        int k = partition(a, i, j - 1, a.get(j));
-
-        swap(a, k, j); // Put pivot in place
-        if ((k - i) > 1) {
-            // System.out.println("k-i " +k +", " +i);
-            quicksort(a, i, k - 1); // Sort left partition
-        }
-        if ((j - k) > 1) {
-            // System.out.println("j-k "+j +", " +k);
-            quicksort(a, k + 1, j); // Sort right partition
-        }
-    }
-    /**
-     * closeOutBuffer
-     * @param a 
-     * @param i
-     * @param j
-     * @return (i + j) / 2
-     */
-    private int findpivot(ArrayList<Ascore> a, int i, int j) {
-        return (i + j) / 2;
-    }
-    /**
-     * closeOutBuffer
-     * @param a 
-     * @param i
-     * @param j
-     * @return left
-     */
-    private int partition(ArrayList<Ascore> a, 
-            int left, int right, Ascore pivot) {
-        while (left <= right) { // Move bounds inward until they meet
-            while (a.get(left).compareTo(pivot) > 0) {
-                left++;
-            }
-            while ((right >= left) && (a.get(right).compareTo(pivot) < 0)) {
-                right--;
-            }
-            if (right > left) {
-                swap(a, left, right); // Swap out-of-place values
-                
-            }
-        }
-        return left; // Return first position in right partition
-    }
-    /**
-     * closeOutBuffer
-     * @param a 
-     * @param i
-     * @param j
-     */
-    private void swap(ArrayList<Ascore> a, int i, int j) {
-        Ascore t = a.get(i);
-        a.set(i, a.get(j));
-        a.set(j, t);
-    }
-    /**
-     * closeOutBuffer
-     * @param a 
-     * @param s
-     * @param e
-     */
-    private void insertion(ArrayList<Ascore> a, int s, int e) {
-        for (int i = s; i < e; i++) {
-            for (int k = i + 1; 
-                    (k > 0) && a.get(k).compareTo(a.get(k - 1)) > 0; 
-                    k--) {
-                swap(a, k, k - 1);
-            }
-        }
-    }
+    
 }
