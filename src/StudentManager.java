@@ -32,7 +32,10 @@ public class StudentManager {
      */
     public void storeStudent(String filename) {
         try {
-            DataInputStream inn = new DataInputStream(new BufferedInputStream(new FileInputStream(filename)));
+            DataInputStream inn = 
+                    new DataInputStream(
+                            new BufferedInputStream(
+                                    new FileInputStream(filename)));
             byte[] txt = new byte[10];
             inn.read(txt);
             int size = inn.readInt();
@@ -70,11 +73,16 @@ public class StudentManager {
                 byte[] txttail = new byte[8];
                 inn.read(txttail);
 
-                studentList.insert(createStudent(firstname, midname, lastname, pid));
+                studentList.insert(
+                        createStudent(
+                                firstname, 
+                                midname, 
+                                lastname, pid));
 
             }
             inn.close();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -116,7 +124,9 @@ public class StudentManager {
                         sb.append("0");
                     }
                     String z = sb.toString();
-                    System.out.println("909" + z + pid + ", " + t.getFirstName() + " " + t.getLastName() + " at rank "
+                    System.out.println("909" + z + pid + ", " 
+                            + t.getFirstName() + " " 
+                            + t.getLastName() + " at rank "
                             + i + " with Ascore " + score);
                 }
 
@@ -124,7 +134,8 @@ public class StudentManager {
             }
 
             in.close();
-        } catch (Exception e) {
+        } 
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -136,7 +147,9 @@ public class StudentManager {
      * @return t t null
      */
     private Student searchByPid(Long pid) {
-        BSTIterator<Student> it = new BSTIterator<Student>(studentList.getRoot());
+        BSTIterator<Student> it = 
+                new BSTIterator<Student>(
+                        studentList.getRoot());
         while (it.hasNext()) {
             Student t = it.next().getElement();
             if (t.getPid().equals(pid)) {
@@ -161,6 +174,9 @@ public class StudentManager {
         created.setScore(0);
         return created;
     }
+    /**
+    * @throws IOException
+    */
     private void read10Block() throws IOException
     {
         count = 0;
